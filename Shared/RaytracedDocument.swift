@@ -15,6 +15,9 @@ extension UTType {
 }
 
 struct RaytracedDocument: FileDocument {
+    
+    var core    = Core()
+
     var text: String
 
     init(text: String = "Hello, world!") {

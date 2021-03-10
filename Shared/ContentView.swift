@@ -11,7 +11,7 @@ struct ContentView: View {
     @Binding var document: RaytracedDocument
 
     var body: some View {
-        TextEditor(text: $document.text)
+        MetalView(document.core, .Main)
     }
 }
 
