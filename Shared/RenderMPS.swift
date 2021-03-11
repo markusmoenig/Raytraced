@@ -39,12 +39,16 @@ class RenderMPS : Render
     var accumulationTarget  : MTLTexture!
     var renderTarget        : MTLTexture!
     
+    var radianceTarget      : MTLTexture!
+    var throughputTarget    : MTLTexture!
+    var absorptionTarget    : MTLTexture!
+    
     var intersector         : MPSRayIntersector!
     let alignedUniformsSize = (MemoryLayout<Uniforms>.size + 255) & ~255
 
     var accelerationStructure: MPSTriangleAccelerationStructure!
 
-    let rayStride           = MemoryLayout<MPSRayOriginMinDistanceDirectionMaxDistance>.stride + MemoryLayout<float3>.stride
+    let rayStride           = MemoryLayout<MPSRayOriginMinDistanceDirectionMaxDistance>.stride + MemoryLayout<float3>.stride * 6
     let maxFramesInFlight   = 3
 
     override func setup()
@@ -81,7 +85,8 @@ class RenderMPS : Render
         
         update()
         
-        // MARK: generate rays
+        // MARK: Generate Rays
+        
         let width = Int(size.x)
         let height = Int(size.y)
         let threadsPerGroup = MTLSizeMake(8, 8, 1)
@@ -93,15 +98,18 @@ class RenderMPS : Render
         computeEncoder?.setBuffer(uniformBuffer, offset: uniformBufferOffset,
                                   index: 0)
         computeEncoder?.setBuffer(rayBuffer, offset: 0, index: 1)
-        computeEncoder?.setBuffer(randomBuffer, offset: randomBufferOffset,
-                                  index: 2)
+
         computeEncoder?.setTexture(renderTarget, index: 0)
+        //computeEncoder?.setTexture(radianceTarget, index: 1)
+        //computeEncoder?.setTexture(throughputTarget, index: 2)
+        //computeEncoder?.setTexture(absorptionTarget, index: 3)
         computeEncoder?.setComputePipelineState(rayPipeline)
         computeEncoder?.dispatchThreadgroups(threadGroups,
                                              threadsPerThreadgroup: threadsPerGroup)
         computeEncoder?.endEncoding()
         
         for _ in 0..<3 {
+            
             // MARK: generate intersections between rays and model triangles
             intersector?.intersectionDataType = .distancePrimitiveIndexCoordinates
             intersector?.encodeIntersection(
@@ -131,7 +139,7 @@ class RenderMPS : Render
             computeEncoder?.setComputePipelineState(shadePipelineState!)
             computeEncoder?.dispatchThreadgroups(threadGroups, threadsPerThreadgroup: threadsPerGroup)
             computeEncoder?.endEncoding()
-          
+            
             // MARK: shadows
             
             intersector?.label = "Shadows Intersector"
@@ -150,12 +158,14 @@ class RenderMPS : Render
             computeEncoder?.label = "Shadows"
             computeEncoder?.setBuffer(uniformBuffer, offset: uniformBufferOffset,
                                     index: 0)
-            computeEncoder?.setBuffer(shadowRayBuffer, offset: 0, index: 1)
-            computeEncoder?.setBuffer(intersectionBuffer, offset: 0, index: 2)
+            computeEncoder?.setBuffer(rayBuffer, offset: 0, index: 1)
+            computeEncoder?.setBuffer(shadowRayBuffer, offset: 0, index: 2)
+            computeEncoder?.setBuffer(intersectionBuffer, offset: 0, index: 3)
             computeEncoder?.setTexture(renderTarget, index: 0)
             computeEncoder?.setComputePipelineState(shadowPipeline!)
             computeEncoder?.dispatchThreadgroups(threadGroups,threadsPerThreadgroup: threadsPerGroup)
             computeEncoder?.endEncoding()
+            
         }
         
         // MARK: accumulation
@@ -203,7 +213,11 @@ class RenderMPS : Render
         renderTargetDescriptor.usage = [.shaderRead, .shaderWrite]
         
         renderTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
-        
+
+        //radianceTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
+        //throughputTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
+        //absorptionTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
+
         let rayCount = Int(size.x * size.y)
         rayBuffer = core.device.makeBuffer(length: rayStride * rayCount, options: .storageModePrivate)
         shadowRayBuffer = core.device.makeBuffer(length: rayStride * rayCount,
@@ -287,18 +301,11 @@ class RenderMPS : Render
         let uniforms = pointer.bindMemory(to: Uniforms.self, capacity: 1)
       
         var camera = Camera()
-        camera.position = float3(0.0, 1.0, 3.38)
-        camera.forward = float3(0.0, 0.0, -1.0)
-        camera.right = float3(1.0, 0.0, 0.0)
-        camera.up = float3(0.0, 1.0, 0.0)
-      
-        let fieldOfView = 45.0 * (Float.pi / 180.0)
-        let aspectRatio = Float(size.x) / Float(size.y)
-        let imagePlaneHeight = tanf(fieldOfView / 2.0)
-        let imagePlaneWidth = aspectRatio * imagePlaneHeight
-      
-        camera.right *= imagePlaneWidth
-        camera.up *= imagePlaneHeight
+        camera.position = float3(0.0, 1.0, -2)
+        camera.lookAt = float3(0, 0, 0)
+        camera.focalDist = 0.1
+        camera.aperture = 0
+        camera.fov = 80
       
         var light = AreaLight()
         light.position = float3(0.0, 1.98, 0.0)
@@ -309,12 +316,15 @@ class RenderMPS : Render
       
         uniforms.pointee.camera = camera
         uniforms.pointee.light = light
+        
+        uniforms.pointee.randomVector = float3(Float.random(in: 0...1), Float.random(in: 0...1), Float.random(in: 0...1))
       
         uniforms.pointee.width = uint(size.x)
         uniforms.pointee.height = uint(size.y)
         uniforms.pointee.blocksWide = ((uniforms.pointee.width) + 15) / 16
         uniforms.pointee.frameIndex = frameIndex
         frameIndex += 1
+        uniforms.pointee.numberOfLights = 1;
         #if os(OSX)
         uniformBuffer?.didModifyRange(uniformBufferOffset..<(uniformBufferOffset + alignedUniformsSize))
         #endif

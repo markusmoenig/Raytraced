@@ -11,10 +11,11 @@
 #include <simd/simd.h>
 
 struct Camera {
-  vector_float3 position;
-  vector_float3 right;
-  vector_float3 up;
-  vector_float3 forward;
+    vector_float3   position;
+    vector_float3   lookAt;
+    float           fov;
+    float           focalDist;
+    float           aperture;
 };
 
 struct AreaLight {
@@ -27,12 +28,17 @@ struct AreaLight {
 
 struct Uniforms
 {
-  unsigned int width;
-  unsigned int height;
-  unsigned int blocksWide;
-  unsigned int frameIndex;
-  struct Camera camera;
-  struct AreaLight light;
+    unsigned int    width;
+    unsigned int    height;
+    unsigned int    blocksWide;
+    unsigned int    frameIndex;
+    
+    vector_float3   randomVector;
+    
+    unsigned int    numberOfLights;
+    
+    struct Camera   camera;
+    struct AreaLight light;
 };
 
 #endif /* Metal_h */

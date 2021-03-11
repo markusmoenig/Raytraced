@@ -44,17 +44,29 @@ class Render
                               segments: [100, 100],
                               inwardNormals: false,
                               geometryType: .triangles,
-                              allocator: allocator)*/
-        //mdlMesh.addNormals(withAttributeNamed: MDLVertexAttributeNormal, creaseThreshold: 1)
+                              allocator: allocator)
+        mdlSphere.addNormals(withAttributeNamed: MDLVertexAttributeNormal, creaseThreshold: 1)
+        print(mdlSphere.vertexBuffers.count, mdlSphere.vertexDescriptor)
+        */        
         
-        let assetURL = Bundle.main.url(forResource: "sphere", withExtension: "obj")!
+        var assetURL = Bundle.main.url(forResource: "sphere", withExtension: "obj")!
 
-        let asset = MDLAsset(url: assetURL,
+        var asset = MDLAsset(url: assetURL,
                              vertexDescriptor: vertexDescriptor,
                              bufferAllocator: allocator)
         
         if let mdlMesh = asset.object(at: 0) as? MDLMesh {
-            addMeshToScene(mdlMesh: mdlMesh, position: float3(0,0,0), scale: 1)
+            addMeshToScene(mdlMesh: mdlMesh, position: float3(0,0.5,0), scale: 0.3)
+        }
+        
+        assetURL = Bundle.main.url(forResource: "plane", withExtension: "obj")!
+
+        asset = MDLAsset(url: assetURL,
+                             vertexDescriptor: vertexDescriptor,
+                             bufferAllocator: allocator)
+        
+        if let mdlMesh = asset.object(at: 0) as? MDLMesh {
+            addMeshToScene(mdlMesh: mdlMesh, position: float3(0,0,0), scale: 10)
             print("build scene finished")
         }
     }
@@ -91,6 +103,19 @@ class Render
                 colors.append(color)
             }
         }
+    }
+    
+    /// Allocate a texture of the given size
+    func allocateTexture2D(width: Int, height: Int, format: MTLPixelFormat = .rgba16Float) -> MTLTexture?
+    {
+        let textureDescriptor = MTLTextureDescriptor()
+        textureDescriptor.textureType = MTLTextureType.type2D
+        textureDescriptor.pixelFormat = format
+        textureDescriptor.width = width == 0 ? 1 : width
+        textureDescriptor.height = height == 0 ? 1 : height
+        
+        textureDescriptor.usage = MTLTextureUsage.unknown
+        return core.device.makeTexture(descriptor: textureDescriptor)
     }
     
     func setup()

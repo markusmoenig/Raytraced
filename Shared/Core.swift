@@ -37,6 +37,7 @@ class Core
         
         view.enableSetNeedsDisplay = false
         view.isPaused = false
+        view.preferredFramesPerSecond = 10;
         
         commandQueue = device.makeCommandQueue()
 
