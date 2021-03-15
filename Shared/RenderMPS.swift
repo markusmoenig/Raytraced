@@ -207,8 +207,8 @@ class RenderMPS : Render
         let renderTargetDescriptor = MTLTextureDescriptor()
         renderTargetDescriptor.pixelFormat = .rgba32Float
         renderTargetDescriptor.textureType = .type2D
-        renderTargetDescriptor.width = Int(size.x)
-        renderTargetDescriptor.height = Int(size.y)
+        renderTargetDescriptor.width = Int(size.x == 0 ? 1 : size.x)
+        renderTargetDescriptor.height = Int(size.y == 0 ? 1 : size.y)
         renderTargetDescriptor.storageMode = .private
         renderTargetDescriptor.usage = [.shaderRead, .shaderWrite]
         
@@ -218,7 +218,8 @@ class RenderMPS : Render
         //throughputTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
         //absorptionTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
 
-        let rayCount = Int(size.x * size.y)
+        var rayCount = Int(size.x * size.y)
+        if rayCount == 0 { rayCount = 1 }
         rayBuffer = core.device.makeBuffer(length: rayStride * rayCount, options: .storageModePrivate)
         shadowRayBuffer = core.device.makeBuffer(length: rayStride * rayCount,
                                                  options: .storageModePrivate)
@@ -301,7 +302,7 @@ class RenderMPS : Render
         let uniforms = pointer.bindMemory(to: Uniforms.self, capacity: 1)
       
         var camera = Camera()
-        camera.position = float3(0.0, 1.0, -2)
+        camera.position = float3(2, 1.0, -2)
         camera.lookAt = float3(0, 0, 0)
         camera.focalDist = 0.1
         camera.aperture = 0

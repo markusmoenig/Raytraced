@@ -903,6 +903,9 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
 
             state.eta = dot(state.normal, state.ffnormal) > 0.0 ? (1.0 / state.mat.ior) : state.mat.ior;
 
+            state.mat.albedo = interpolateVertexAttribute(vertexColors, intersection);
+            ray.color = state.mat.albedo;
+
             // DirectLight for a random light source
 
             uint index = random.getRandomLightIndex();
@@ -923,7 +926,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
             light.u = float3(1, 2, 1);
             light.v = float3(0, 2, 1);
             light.radius = 1;
-            light.area = 5;
+            light.area = 50;
             light.type = 0;
 
             sampleLight(light, lightSampleRec, random);
@@ -1010,6 +1013,8 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
             state.normal = ray.surfaceNormal;
             state.ffnormal = dot(ray.surfaceNormal, ray.direction) <= 0.0 ? ray.surfaceNormal : ray.surfaceNormal * -1.0;
             Onb(state.ffnormal, state.tangent, state.bitangent);
+            
+            state.mat.albedo = ray.color;
             
             PTBsdfSampleRec bsdfSampleRec;
 

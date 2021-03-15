@@ -37,14 +37,10 @@
 		2B832E0625F8935E006A54E6 /* RenderMPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B832E0425F8935E006A54E6 /* RenderMPS.swift */; };
 		2B832E0825F895A9006A54E6 /* Render.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B832E0725F895A9006A54E6 /* Render.swift */; };
 		2B832E0925F895A9006A54E6 /* Render.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B832E0725F895A9006A54E6 /* Render.swift */; };
-		2B832E0E25F8A699006A54E6 /* sphere.mtl in Resources */ = {isa = PBXBuildFile; fileRef = 2B832E0C25F8A699006A54E6 /* sphere.mtl */; };
-		2B832E0F25F8A699006A54E6 /* sphere.mtl in Resources */ = {isa = PBXBuildFile; fileRef = 2B832E0C25F8A699006A54E6 /* sphere.mtl */; };
-		2B832E1025F8A699006A54E6 /* sphere.obj in Resources */ = {isa = PBXBuildFile; fileRef = 2B832E0D25F8A699006A54E6 /* sphere.obj */; };
-		2B832E1125F8A699006A54E6 /* sphere.obj in Resources */ = {isa = PBXBuildFile; fileRef = 2B832E0D25F8A699006A54E6 /* sphere.obj */; };
-		2BB73EAF25F9A78B005C6B39 /* plane.mtl in Resources */ = {isa = PBXBuildFile; fileRef = 2BB73EAD25F9A78A005C6B39 /* plane.mtl */; };
-		2BB73EB025F9A78B005C6B39 /* plane.mtl in Resources */ = {isa = PBXBuildFile; fileRef = 2BB73EAD25F9A78A005C6B39 /* plane.mtl */; };
-		2BB73EB125F9A78B005C6B39 /* plane.obj in Resources */ = {isa = PBXBuildFile; fileRef = 2BB73EAE25F9A78B005C6B39 /* plane.obj */; };
-		2BB73EB225F9A78B005C6B39 /* plane.obj in Resources */ = {isa = PBXBuildFile; fileRef = 2BB73EAE25F9A78B005C6B39 /* plane.obj */; };
+		2BE26FD325FF334D00FF8706 /* Asset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE26FD225FF334D00FF8706 /* Asset.swift */; };
+		2BE26FD425FF334D00FF8706 /* Asset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE26FD225FF334D00FF8706 /* Asset.swift */; };
+		2BE26FD625FF3B6600FF8706 /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE26FD525FF3B6600FF8706 /* Views.swift */; };
+		2BE26FD725FF3B6600FF8706 /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE26FD525FF3B6600FF8706 /* Views.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,10 +87,8 @@
 		2B832E0425F8935E006A54E6 /* RenderMPS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderMPS.swift; sourceTree = "<group>"; };
 		2B832E0725F895A9006A54E6 /* Render.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Render.swift; sourceTree = "<group>"; };
 		2B832E0A25F89E6D006A54E6 /* Metal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Metal.h; sourceTree = "<group>"; };
-		2B832E0C25F8A699006A54E6 /* sphere.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sphere.mtl; sourceTree = "<group>"; };
-		2B832E0D25F8A699006A54E6 /* sphere.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sphere.obj; sourceTree = "<group>"; };
-		2BB73EAD25F9A78A005C6B39 /* plane.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = plane.mtl; sourceTree = "<group>"; };
-		2BB73EAE25F9A78B005C6B39 /* plane.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = plane.obj; sourceTree = "<group>"; };
+		2BE26FD225FF334D00FF8706 /* Asset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Asset.swift; sourceTree = "<group>"; };
+		2BE26FD525FF3B6600FF8706 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +141,8 @@
 				2B832D9525F84D55006A54E6 /* RaytracedApp.swift */,
 				2B832D9625F84D55006A54E6 /* RaytracedDocument.swift */,
 				2B832D9725F84D55006A54E6 /* ContentView.swift */,
+				2BE26FD525FF3B6600FF8706 /* Views.swift */,
+				2BE26FD225FF334D00FF8706 /* Asset.swift */,
 				2B832DD525F84E7E006A54E6 /* Core.swift */,
 				2B832E0725F895A9006A54E6 /* Render.swift */,
 				2B832E0425F8935E006A54E6 /* RenderMPS.swift */,
@@ -157,7 +153,6 @@
 				2B832DEF25F85163006A54E6 /* Utils.swift */,
 				2B832DE425F85110006A54E6 /* Classes */,
 				2B832DE525F8511E006A54E6 /* Fonts */,
-				2B832E0B25F8A68A006A54E6 /* Models */,
 				2B832D9825F84D57006A54E6 /* Assets.xcassets */,
 			);
 			path = Shared;
@@ -224,17 +219,6 @@
 				2B832DE925F85138006A54E6 /* OpenSans.tiff */,
 			);
 			path = Fonts;
-			sourceTree = "<group>";
-		};
-		2B832E0B25F8A68A006A54E6 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				2B832E0C25F8A699006A54E6 /* sphere.mtl */,
-				2B832E0D25F8A699006A54E6 /* sphere.obj */,
-				2BB73EAD25F9A78A005C6B39 /* plane.mtl */,
-				2BB73EAE25F9A78B005C6B39 /* plane.obj */,
-			);
-			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -361,13 +345,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2B832E0E25F8A699006A54E6 /* sphere.mtl in Resources */,
 				2B832DC525F84D57006A54E6 /* Assets.xcassets in Resources */,
-				2BB73EB125F9A78B005C6B39 /* plane.obj in Resources */,
-				2BB73EAF25F9A78B005C6B39 /* plane.mtl in Resources */,
 				2B832DED25F85138006A54E6 /* OpenSans.json in Resources */,
 				2B832DEB25F85138006A54E6 /* OpenSans.tiff in Resources */,
-				2B832E1025F8A699006A54E6 /* sphere.obj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -375,13 +355,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2B832E0F25F8A699006A54E6 /* sphere.mtl in Resources */,
 				2B832DC625F84D57006A54E6 /* Assets.xcassets in Resources */,
-				2BB73EB225F9A78B005C6B39 /* plane.obj in Resources */,
-				2BB73EB025F9A78B005C6B39 /* plane.mtl in Resources */,
 				2B832DEE25F85138006A54E6 /* OpenSans.json in Resources */,
 				2B832DEC25F85138006A54E6 /* OpenSans.tiff in Resources */,
-				2B832E1125F8A699006A54E6 /* sphere.obj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -412,6 +388,8 @@
 				2B832DDA25F84EA9006A54E6 /* MetalView.swift in Sources */,
 				2B832E0525F8935E006A54E6 /* RenderMPS.swift in Sources */,
 				2B832E0225F85D0D006A54E6 /* Metal.metal in Sources */,
+				2BE26FD625FF3B6600FF8706 /* Views.swift in Sources */,
+				2BE26FD325FF334D00FF8706 /* Asset.swift in Sources */,
 				2B832DF025F85163006A54E6 /* Utils.swift in Sources */,
 				2B832DE725F8512C006A54E6 /* Font.swift in Sources */,
 				2B832DD625F84E7E006A54E6 /* Core.swift in Sources */,
@@ -430,6 +408,8 @@
 				2B832DDB25F84EA9006A54E6 /* MetalView.swift in Sources */,
 				2B832E0625F8935E006A54E6 /* RenderMPS.swift in Sources */,
 				2B832E0325F85D0D006A54E6 /* Metal.metal in Sources */,
+				2BE26FD725FF3B6600FF8706 /* Views.swift in Sources */,
+				2BE26FD425FF334D00FF8706 /* Asset.swift in Sources */,
 				2B832DF125F85163006A54E6 /* Utils.swift in Sources */,
 				2B832DE825F8512C006A54E6 /* Font.swift in Sources */,
 				2B832DD725F84E7E006A54E6 /* Core.swift in Sources */,

@@ -20,8 +20,12 @@ class Core
 
     var renderer        : Render!
 
+    var assetFolder     : AssetFolder!
+
     init()
     {
+        assetFolder = AssetFolder()
+        assetFolder.setup(self)
     }
     
     func setupView(_ view: DMTKView)
