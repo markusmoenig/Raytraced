@@ -7,10 +7,76 @@
 
 import SwiftUI
 
+struct Float3ParamView: View {
+    
+    let core                                : Core
+    
+    var asset                               : Asset
+    
+    var valueName                           : String
+    var displayName                         : String
+    var updateView                          : Binding<Bool>
+    
+    @State var xValueText                   : String = ""
+    @State var yValueText                   : String = ""
+    @State var zValueText                   : String = ""
+
+    init(core: Core, asset: Asset, valueName: String, displayName: String, updateView: Binding<Bool>)
+    {
+        self.core = core
+        self.asset = asset
+        self.valueName = valueName
+        self.displayName = displayName
+        self.updateView = updateView
+        
+        _xValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_x"]!))
+        _yValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_y"]!))
+        _zValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_z"]!))
+            
+        print("init", asset.name, _yValueText)
+    }
+    
+    var body: some View {
+
+        VStack(alignment: .leading) {
+            Text(displayName)
+            HStack {
+                TextField(valueName, text: $xValueText, onEditingChanged: { (changed) in
+                },
+                onCommit: {
+                    asset.values[valueName + "_x"] = Float(xValueText)
+                    core.renderer.restart()
+                } )
+                //.padding(2)
+                .border(Color.red)
+                TextField(valueName, text: $yValueText, onEditingChanged: { (changed) in
+                    asset.values[valueName + "_y"] = Float(yValueText)
+                    core.renderer.restart()
+                },
+                onCommit: {
+                } )
+                //.padding(2)
+                .border(Color.green)
+                TextField(valueName, text: $zValueText, onEditingChanged: { (changed) in
+                    asset.values[valueName + "_z"] = Float(zValueText)
+                    core.renderer.restart()
+                },
+                onCommit: {
+                } )
+                //.padding(2)
+                .border(Color.blue)
+            }
+        }
+    }
+}
+
 struct ParameterView: View {
     
     let core                                : Core
-        
+    
+    @State var asset                        : Asset? = nil
+    
+    @State var nameState                    : String = ""
     @State var updateView                   : Bool = false
 
     init(_ core: Core)
@@ -23,32 +89,41 @@ struct ParameterView: View {
         ScrollView {
             VStack(alignment: .leading) {
                 
-                //ForEach(options, id: \.id) { option in
-                //    ParamAsTextView(core, option)
-                //        .padding(4)
-                //}
+                if let currentAsset = asset {
+                    Text("Name")
+                    TextField(currentAsset.name, text: $nameState, onEditingChanged: { (changed) in
+                        //option.raw = valueText
+                    },
+                    onCommit: {
+                        //core.scriptProcessor.replaceOptionInLine(option, useRaw: true)
+                        currentAsset.name = nameState
+                        core.assetFolder.setCurrent()
+                        core.assetFolder.setCurrent(asset)
+                    } )
+                    .padding(2)
+                    
+                    Float3ParamView(core: core, asset: currentAsset, valueName: "position", displayName: "Position", updateView: $updateView)
+                }
                 
                 Spacer()
             }
             
-            /*
-            .onReceive(self.core.modelChanged) { void in
-                options = core.scriptProcessor.getOptions()
-                updateView.toggle()
+            .onReceive(core.selectionChanged) { id in
+                asset = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    asset = core.assetFolder.current
+                    if let asset = asset {
+                        nameState = asset.name
+                    }
+                }
             }
-            .onReceive(self.core.graphBuilder.selectionChanged) { id in
-                options = core.scriptProcessor.getOptions()
-                updateView.toggle()
-            }
-            .onReceive(self.core.graphBuilder.contextColorChanged) { colorText in
-                let v = Float3(0,0,0)
-                v.isColor = true
-                options = [GraphOption(v,"Color","")]
-                updateView.toggle()
-            }
+            
             .onAppear(perform: {
-                options = core.scriptProcessor.getOptions()
-            })*/
+                asset = core.assetFolder.current
+                if let asset = asset {
+                    nameState = asset.name
+                }
+            })
         }
     }
 }
@@ -63,8 +138,8 @@ struct LeftPanelView: View {
     
     @State private var selection            : UUID? = nil
         
-    @State private var showMaterials        : Bool = false
-    @State private var showObjects          : Bool = false
+    @State private var showPrimitives       : Bool = true
+    @State private var showObjects          : Bool = true
 
     #if os(macOS)
     let TopRowPadding                       : CGFloat = 2
@@ -75,6 +150,7 @@ struct LeftPanelView: View {
     init(_ core: Core)
     {
         self.core = core
+        _selection = State(initialValue: core.assetFolder.currentId)
     }
     
     var body: some View {
@@ -83,7 +159,7 @@ struct LeftPanelView: View {
             
             List() {
                 Button(action: {
-                    //core.graphBuilder.gotoNode(cameraNode)
+                    core.assetFolder.setCurrent()
                 })
                 {
                     Label("Camera", systemImage: "camera")
@@ -92,94 +168,33 @@ struct LeftPanelView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 .listRowBackground(Group {
-                    if core.assetFolder.currentId == nil {
+                    if selection == nil {
                         Color.gray.mask(RoundedRectangle(cornerRadius: 4))
                     } else { Color.clear }
                 })
-                
-                /*
-                if let sunNode = context.sunNode {
-                    Button(action: {
-                        core.graphBuilder.gotoNode(sunNode)
-                    })
-                    {
-                        Label(sunNode.name, systemImage: "sun.max")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .listRowBackground(Group {
-                        if selection == sunNode.id {
-                            Color.gray.mask(RoundedRectangle(cornerRadius: 4))
-                        } else { Color.clear }
-                    })
-                }
-                if let envNode = context.environmentNode {
-                    Button(action: {
-                        core.graphBuilder.gotoNode(envNode)
-                    })
-                    {
-                        Label(envNode.defNode!.givenName, systemImage: "cloud.sun")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .listRowBackground(Group {
-                        if selection == envNode.id {
-                            Color.gray.mask(RoundedRectangle(cornerRadius: 4))
-                        } else { Color.clear }
-                    })
-                }
-                DisclosureGroup("Materials", isExpanded: $showMaterials) {
-                    ForEach(context.materialNodes, id: \.id) { node in
+                DisclosureGroup("Primitives", isExpanded: $showPrimitives) {
+                    ForEach(core.assetFolder.assets, id: \.id) { asset in
                         Button(action: {
-                            core.graphBuilder.gotoNode(node)
+                            core.assetFolder.setCurrent(asset)
                         })
                         {
-                            Label(node.givenName, systemImage: "light.max")
+                            Label(asset.name, systemImage: "cube")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(PlainButtonStyle())
                         .listRowBackground(Group {
-                            if selection == node.id {
+                            if selection == asset.id {
                                 Color.gray.mask(RoundedRectangle(cornerRadius: 4))
                             } else { Color.clear }
                         })
                     }
                 }
-                DisclosureGroup("Objects", isExpanded: $showObjects) {
-                    ForEach(context.objectNodes, id: \.id) { node in
-                        Button(action: {
-                            core.graphBuilder.gotoNode(node)
-                        })
-                        {
-                            Label(node.givenName, systemImage: "cube")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .listRowBackground(Group {
-                            if selection == node.id {
-                                Color.gray.mask(RoundedRectangle(cornerRadius: 4))
-                            } else { Color.clear }
-                        })
-                    }
-                }*/
             }
         }
-            
-        /*
         
-        .onReceive(self.core.modelChanged) { core in
-            asset = self.core.assetFolder.getAsset("main", .Source)
-            updateView.toggle()
-        }
-        .onReceive(self.core.graphBuilder.selectionChanged) { id in
+        .onReceive(core.selectionChanged) { id in
             selection = id
-            //DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            //    selection = id
-            //}
-        }*/
+        }
     }
 }

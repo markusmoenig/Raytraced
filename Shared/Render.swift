@@ -37,11 +37,78 @@ class Render
         self.core = core
     }
     
+    func restart()
+    {
+        vertices = []
+        normals = []
+        colors = []
+        buildScene()
+    }
+    
     func buildScene()
     {
         let allocator = MTKMeshBufferAllocator(device: core.device)
-
         
+        func readFloat(_ asset: Asset,_ name: String) -> Float
+        {
+            var rc = Float(0)
+            if let x = asset.values[name] { rc = x }
+            return rc
+        }
+        
+        func readFloat2(_ asset: Asset,_ name: String) -> float2
+        {
+            var rc = float2(0,0)
+            if let x = asset.values[name + "_x"] { rc.x = x }
+            if let y = asset.values[name + "_y"] { rc.y = y }
+            return rc
+        }
+        
+        func readFloat3(_ asset: Asset,_ name: String) -> float3
+        {
+            var rc = float3(0,0,0)
+            if let x = asset.values[name + "_x"] { rc.x = x }
+            if let y = asset.values[name + "_y"] { rc.y = y }
+            if let z = asset.values[name + "_z"] { rc.z = z }
+            return rc
+        }
+        
+        func readUInt2(_ asset: Asset,_ name: String) -> vector_uint2
+        {
+            var rc = vector_uint2(0,0)
+            if let x = asset.values[name + "_x"] { rc.x = UInt32(x) }
+            if let y = asset.values[name + "_y"] { rc.y = UInt32(y) }
+            return rc
+        }
+        
+        func readUInt3(_ asset: Asset,_ name: String) -> vector_uint3
+        {
+            var rc = vector_uint3(0,0,0)
+            if let x = asset.values[name + "_x"] { rc.x = UInt32(x) }
+            if let y = asset.values[name + "_y"] { rc.y = UInt32(y) }
+            if let z = asset.values[name + "_z"] { rc.z = UInt32(z) }
+            return rc
+        }
+        
+        for asset in core.assetFolder.assets {
+            if asset.type == .Primitive {
+                var mdlMesh : MDLMesh? = nil
+                if asset.values["type"] == 0 {
+                    // Cube
+                    mdlMesh = MDLMesh.newBox(withDimensions: readFloat3(asset, "size"), segments: readUInt3(asset, "segments"), geometryType: .triangles, inwardNormals: false, allocator: allocator)
+                } else
+                if asset.values["type"] == 1 {
+                    // Plane
+                    mdlMesh = MDLMesh.newPlane(withDimensions: readFloat2(asset, "size"), segments: readUInt2(asset, "segments"), geometryType: .triangles, allocator: allocator)
+                }
+                
+                if let mesh = mdlMesh {
+                    addPrimitiveMeshToScene(mdlMesh: mesh, position: readFloat3(asset, "position"), scale: readFloat(asset, "scale"))
+                }
+            }
+        }
+        
+        /*
         let mdlSphere = MDLMesh(sphereWithExtent: [0.75, 0.75, 0.75],
                               segments: [100, 100],
                               inwardNormals: false,
@@ -49,8 +116,9 @@ class Render
                               allocator: allocator)
         //mdlSphere.addNormals(withAttributeNamed: MDLVertexAttributeNormal, creaseThreshold: 1)
         print(mdlSphere.vertexBuffers.count, mdlSphere.vertexDescriptor)
+        */
          
-        addPrimitiveMeshToScene(mdlMesh: mdlSphere, position: float3(0, 0, 0), scale: 1)
+        //addPrimitiveMeshToScene(mdlMesh: mdlSphere, position: float3(0, 0, 0), scale: 1)
         /*
         var error : NSError? = nil
 

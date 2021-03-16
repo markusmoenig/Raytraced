@@ -6,12 +6,20 @@
 //
 
 import MetalKit
+import Combine
 
 class Core
 {
     var view            : DMTKView!
     var device          : MTLDevice!
 
+    // Signals
+    
+    // Selection has changed
+    let selectionChanged = PassthroughSubject<UUID?, Never>()
+    
+    //
+    
     var defaultLibrary  : MTLLibrary!
 
     var commandQueue    : MTLCommandQueue!

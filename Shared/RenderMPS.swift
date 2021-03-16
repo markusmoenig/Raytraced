@@ -283,6 +283,13 @@ class RenderMPS : Render
         
         let device = core.device!
         
+        if uniformBuffer != nil {
+            uniformBuffer.setPurgeableState(.empty)
+            randomBuffer.setPurgeableState(.empty)
+            vertexPositionBuffer.setPurgeableState(.empty)
+            vertexColorBuffer.setPurgeableState(.empty)
+            vertexNormalBuffer.setPurgeableState(.empty)
+        }
         uniformBuffer = device.makeBuffer(length: uniformBufferSize, options: options)
         randomBuffer = device.makeBuffer(length: 256 * MemoryLayout<float2>.stride * maxFramesInFlight, options: options)
         vertexPositionBuffer = device.makeBuffer(bytes: &vertices, length: vertices.count * MemoryLayout<float3>.stride, options: options)
@@ -342,6 +349,20 @@ class RenderMPS : Render
         #if os(OSX)
         randomBuffer?.didModifyRange(randomBufferOffset..<(randomBufferOffset + 256 * MemoryLayout<float2>.stride))
         #endif
+    }
+    
+    override func restart() {
+        super.restart()
+        
+        buildBuffers()
+        
+        accelerationStructure = MPSTriangleAccelerationStructure(device: core.device)
+        accelerationStructure?.vertexBuffer = vertexPositionBuffer
+        accelerationStructure?.triangleCount = vertices.count / 3
+        accelerationStructure?.rebuild()
+        
+        frameIndex = 0
+        //viewSizeWillChange(size: size)
     }
 }
 

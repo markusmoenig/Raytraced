@@ -40,6 +40,64 @@ class AssetFolder       : Codable
             current = assets[0]
             currentId = assets[0].id
         }*/
+        
+        addBox()
+        setCurrent(addPlane())
+    }
+    
+    /// Adds a cube to the scene
+    @discardableResult func addBox() -> Asset
+    {
+        let values : [String: Float] = [
+            "type" : 0,
+            "position_x" : 0,
+            "position_y" : 0.5,
+            "position_z" : 0,
+            "scale" : 1,
+            "segments_x" : 10,
+            "segments_y" : 10,
+            "segments_z" : 10,
+            "size_x" : 1,
+            "size_y" : 1,
+            "size_z" : 1,
+        ]
+        
+        let asset = Asset(type: .Primitive, name: "Cube", values: values)
+        assets.append(asset)
+        return asset
+    }
+    
+    /// Adds a plane to the scene
+    @discardableResult func addPlane() -> Asset
+    {
+        let values : [String: Float] = [
+            "type" : 1,
+            "position_x" : 0,
+            "position_y" : 0,
+            "position_z" : 0,
+            "scale" : 1,
+            "segments_x" : 10,
+            "segments_y" : 10,
+            "size_x" : 100,
+            "size_y" : 100,
+        ]
+        
+        let asset = Asset(type: .Primitive, name: "Plane", values: values)
+        assets.append(asset)
+        return asset
+    }
+    
+    /// Sets the current asset
+    func setCurrent(_ asset: Asset? = nil)
+    {
+        current = asset
+        if let asset = asset {
+            currentId = asset.id
+        } else {
+            currentId = nil
+        }
+        
+        core.selectionChanged.send(currentId)
     }
     
     required init(from decoder: Decoder) throws
@@ -62,10 +120,10 @@ class AssetFolder       : Codable
 class Asset         : Codable, Equatable
 {
     enum AssetType  : Int, Codable {
-        case PrimitiveCube, Object
+        case Primitive, Object
     }
     
-    var type        : AssetType = .PrimitiveCube
+    var type        : AssetType = .Primitive
     var id          = UUID()
     
     var name        = ""

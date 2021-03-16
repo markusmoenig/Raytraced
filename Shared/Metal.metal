@@ -921,7 +921,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
             float area    = params.y;
             float type    = params.z; // 0->rect, 1->sphere*/
             
-            light.position = float3(0, 2, 0);
+            light.position = float3(3, 2, -2);
             light.emission = float3(4, 4, 4);
             light.u = float3(1, 2, 1);
             light.v = float3(0, 2, 1);
