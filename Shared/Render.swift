@@ -93,13 +93,21 @@ class Render
         for asset in core.assetFolder.assets {
             if asset.type == .Primitive {
                 var mdlMesh : MDLMesh? = nil
-                if asset.values["type"] == 0 {
+                if asset.values["type"] == 1 {
                     // Cube
                     mdlMesh = MDLMesh.newBox(withDimensions: readFloat3(asset, "size"), segments: readUInt3(asset, "segments"), geometryType: .triangles, inwardNormals: false, allocator: allocator)
                 } else
-                if asset.values["type"] == 1 {
+                if asset.values["type"] == 0 {
                     // Plane
                     mdlMesh = MDLMesh.newPlane(withDimensions: readFloat2(asset, "size"), segments: readUInt2(asset, "segments"), geometryType: .triangles, allocator: allocator)
+                } else
+                if asset.values["type"] == 2 {
+                    // Sphere
+                    mdlMesh = MDLMesh(sphereWithExtent: readFloat3(asset, "size"),
+                                          segments: readUInt2(asset, "segments"),
+                                          inwardNormals: false,
+                                          geometryType: .triangles,
+                                          allocator: allocator)
                 }
                 
                 if let mesh = mdlMesh {

@@ -41,28 +41,29 @@ class AssetFolder       : Codable
             currentId = assets[0].id
         }*/
         
-        addBox()
-        setCurrent(addPlane())
+        let box = addBox()
+        addPlane()
+        setCurrent(box)
     }
     
     /// Adds a cube to the scene
-    @discardableResult func addBox() -> Asset
+    @discardableResult func addBox(name: String = "Cube") -> Asset
     {
         let values : [String: Float] = [
-            "type" : 0,
+            "type" : 1,
             "position_x" : 0,
             "position_y" : 0.5,
             "position_z" : 0,
             "scale" : 1,
-            "segments_x" : 10,
-            "segments_y" : 10,
-            "segments_z" : 10,
+            "segments_x" : 1,
+            "segments_y" : 1,
+            "segments_z" : 1,
             "size_x" : 1,
             "size_y" : 1,
             "size_z" : 1,
         ]
         
-        let asset = Asset(type: .Primitive, name: "Cube", values: values)
+        let asset = Asset(type: .Primitive, name: name, values: values)
         assets.append(asset)
         return asset
     }
@@ -71,13 +72,14 @@ class AssetFolder       : Codable
     @discardableResult func addPlane() -> Asset
     {
         let values : [String: Float] = [
-            "type" : 1,
+            "type" : 0,
             "position_x" : 0,
             "position_y" : 0,
             "position_z" : 0,
             "scale" : 1,
-            "segments_x" : 10,
-            "segments_y" : 10,
+            "segments_x" : 1,
+            "segments_y" : 1,
+            "segments_z" : 1,
             "size_x" : 100,
             "size_y" : 100,
         ]

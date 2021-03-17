@@ -36,6 +36,7 @@ struct ContentView: View {
                     .layoutPriority(0)
                     .animation(.easeInOut)
                 MetalView(document.core, .Main)
+                    .animation(.easeInOut)
             }
             
             if rightSideParamsAreVisible == true {
@@ -47,6 +48,22 @@ struct ContentView: View {
         }
         
         .toolbar {
+            
+            // Core Controls
+            Button(action: {
+                let box = document.core.assetFolder.addBox(name: "New Cube")
+                document.core.assetFolder.setCurrent(box)
+                document.core.renderer.restart()
+                document.core.modelChanged.send()
+            })
+            {
+                Label("Add", systemImage: "cube")
+            }
+            
+            Divider()
+                .padding(.horizontal, 2)
+                .opacity(0)
+            
             // Toggle the Right sidebar
             Button(action: { rightSideParamsAreVisible.toggle() }, label: {
                 Image(systemName: "sidebar.right")

@@ -18,6 +18,9 @@ class Core
     // Selection has changed
     let selectionChanged = PassthroughSubject<UUID?, Never>()
     
+    // Force update the UI
+    let modelChanged    = PassthroughSubject<Void, Never>()
+    
     //
     
     var defaultLibrary  : MTLLibrary!
