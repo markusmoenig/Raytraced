@@ -18,11 +18,13 @@ class RenderMPS : Render
     
     var vertexPositionBuffer: MTLBuffer!
     var vertexNormalBuffer  : MTLBuffer!
-    var vertexColorBuffer   : MTLBuffer!
+    var materialIndexBuffer : MTLBuffer!
     var indexBuffer         : MTLBuffer!
     var uniformBuffer       : MTLBuffer!
     var randomBuffer        : MTLBuffer!
-    
+
+    var materialBuffer      : MTLBuffer!
+
     var rayBuffer           : MTLBuffer!
     var shadowRayBuffer     : MTLBuffer!
     var intersectionBuffer  : MTLBuffer!
@@ -131,10 +133,11 @@ class RenderMPS : Render
             computeEncoder?.setBuffer(rayBuffer, offset: 0, index: 1)
             computeEncoder?.setBuffer(shadowRayBuffer, offset: 0, index: 2)
             computeEncoder?.setBuffer(intersectionBuffer, offset: 0, index: 3)
-            computeEncoder?.setBuffer(vertexColorBuffer, offset: 0, index: 4)
+            computeEncoder?.setBuffer(materialBuffer, offset: 0, index: 4)
             computeEncoder?.setBuffer(vertexNormalBuffer, offset: 0, index: 5)
             computeEncoder?.setBuffer(randomBuffer, offset: randomBufferOffset,
                                       index: 6)
+            computeEncoder?.setBuffer(materialIndexBuffer, offset: 0, index: 7)
             computeEncoder?.setTexture(renderTarget, index: 0)
             computeEncoder?.setComputePipelineState(shadePipelineState!)
             computeEncoder?.dispatchThreadgroups(threadGroups, threadsPerThreadgroup: threadsPerGroup)
@@ -161,6 +164,7 @@ class RenderMPS : Render
             computeEncoder?.setBuffer(rayBuffer, offset: 0, index: 1)
             computeEncoder?.setBuffer(shadowRayBuffer, offset: 0, index: 2)
             computeEncoder?.setBuffer(intersectionBuffer, offset: 0, index: 3)
+            computeEncoder?.setBuffer(materialBuffer, offset: 0, index: 4)
             computeEncoder?.setTexture(renderTarget, index: 0)
             computeEncoder?.setComputePipelineState(shadowPipeline!)
             computeEncoder?.dispatchThreadgroups(threadGroups,threadsPerThreadgroup: threadsPerGroup)
@@ -287,14 +291,17 @@ class RenderMPS : Render
             uniformBuffer.setPurgeableState(.empty)
             randomBuffer.setPurgeableState(.empty)
             vertexPositionBuffer.setPurgeableState(.empty)
-            vertexColorBuffer.setPurgeableState(.empty)
+            materialIndexBuffer.setPurgeableState(.empty)
             vertexNormalBuffer.setPurgeableState(.empty)
+            materialBuffer.setPurgeableState(.empty)
         }
         uniformBuffer = device.makeBuffer(length: uniformBufferSize, options: options)
         randomBuffer = device.makeBuffer(length: 256 * MemoryLayout<float2>.stride * maxFramesInFlight, options: options)
         vertexPositionBuffer = device.makeBuffer(bytes: &vertices, length: vertices.count * MemoryLayout<float3>.stride, options: options)
-        vertexColorBuffer = device.makeBuffer(bytes: &colors, length: colors.count * MemoryLayout<float3>.stride, options: options)
+        materialIndexBuffer = device.makeBuffer(bytes: &materialIndeces, length: materialIndeces.count * MemoryLayout<uint>.stride, options: options)
         vertexNormalBuffer = device.makeBuffer(bytes: &normals, length: normals.count * MemoryLayout<float3>.stride, options: options)
+        
+        materialBuffer = device.makeBuffer(bytes: &materialData, length: materialData.count * MemoryLayout<float4>.stride * 6, options: options)
     }
     
     func update() {

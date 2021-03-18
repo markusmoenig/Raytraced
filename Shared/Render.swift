@@ -13,9 +13,13 @@ class Render
     
     var defaultLibrary      : MTLLibrary!
 
+    var materialIndex       : uint = 0
+    
     var vertices            : [float3] = []
     var normals             : [float3] = []
-    var colors              : [float3] = []
+    var materialIndeces     : [uint] = []
+    
+    var materialData        : [float4] = []
     
     lazy var vertexDescriptor: MDLVertexDescriptor = {
       let vertexDescriptor = MDLVertexDescriptor()
@@ -41,7 +45,9 @@ class Render
     {
         vertices = []
         normals = []
-        colors = []
+        materialIndeces = []
+        materialData = []
+        materialIndex = 0
         buildScene()
     }
     
@@ -49,69 +55,28 @@ class Render
     {
         let allocator = MTKMeshBufferAllocator(device: core.device)
         
-        func readFloat(_ asset: Asset,_ name: String) -> Float
-        {
-            var rc = Float(0)
-            if let x = asset.values[name] { rc = x }
-            return rc
-        }
-        
-        func readFloat2(_ asset: Asset,_ name: String) -> float2
-        {
-            var rc = float2(0,0)
-            if let x = asset.values[name + "_x"] { rc.x = x }
-            if let y = asset.values[name + "_y"] { rc.y = y }
-            return rc
-        }
-        
-        func readFloat3(_ asset: Asset,_ name: String) -> float3
-        {
-            var rc = float3(0,0,0)
-            if let x = asset.values[name + "_x"] { rc.x = x }
-            if let y = asset.values[name + "_y"] { rc.y = y }
-            if let z = asset.values[name + "_z"] { rc.z = z }
-            return rc
-        }
-        
-        func readUInt2(_ asset: Asset,_ name: String) -> vector_uint2
-        {
-            var rc = vector_uint2(0,0)
-            if let x = asset.values[name + "_x"] { rc.x = UInt32(x) }
-            if let y = asset.values[name + "_y"] { rc.y = UInt32(y) }
-            return rc
-        }
-        
-        func readUInt3(_ asset: Asset,_ name: String) -> vector_uint3
-        {
-            var rc = vector_uint3(0,0,0)
-            if let x = asset.values[name + "_x"] { rc.x = UInt32(x) }
-            if let y = asset.values[name + "_y"] { rc.y = UInt32(y) }
-            if let z = asset.values[name + "_z"] { rc.z = UInt32(z) }
-            return rc
-        }
-        
         for asset in core.assetFolder.assets {
             if asset.type == .Primitive {
                 var mdlMesh : MDLMesh? = nil
                 if asset.values["type"] == 1 {
                     // Cube
-                    mdlMesh = MDLMesh.newBox(withDimensions: readFloat3(asset, "size"), segments: readUInt3(asset, "segments"), geometryType: .triangles, inwardNormals: false, allocator: allocator)
+                    mdlMesh = MDLMesh.newBox(withDimensions: asset.readFloat3("size"), segments: asset.readUInt3("segments"), geometryType: .triangles, inwardNormals: false, allocator: allocator)
                 } else
                 if asset.values["type"] == 0 {
                     // Plane
-                    mdlMesh = MDLMesh.newPlane(withDimensions: readFloat2(asset, "size"), segments: readUInt2(asset, "segments"), geometryType: .triangles, allocator: allocator)
+                    mdlMesh = MDLMesh.newPlane(withDimensions: asset.readFloat2("size"), segments: asset.readUInt2("segments"), geometryType: .triangles, allocator: allocator)
                 } else
                 if asset.values["type"] == 2 {
                     // Sphere
-                    mdlMesh = MDLMesh(sphereWithExtent: readFloat3(asset, "size"),
-                                          segments: readUInt2(asset, "segments"),
-                                          inwardNormals: false,
-                                          geometryType: .triangles,
-                                          allocator: allocator)
+                    mdlMesh = MDLMesh(sphereWithExtent: asset.readFloat3("size"),
+                                      segments: asset.readUInt2("segments"),
+                                      inwardNormals: false,
+                                      geometryType: .triangles,
+                                      allocator: allocator)
                 }
                 
                 if let mesh = mdlMesh {
-                    addPrimitiveMeshToScene(mdlMesh: mesh, position: readFloat3(asset, "position"), scale: readFloat(asset, "scale"))
+                    addPrimitiveMeshToScene(mdlMesh: mesh, asset: asset, position: asset.readFloat3("position"), scale: asset.readFloat("scale"))
                 }
             }
         }
@@ -177,7 +142,7 @@ class Render
         */
     }
     
-    func addPrimitiveMeshToScene(mdlMesh: MDLMesh, position: float3, scale: Float)
+    func addPrimitiveMeshToScene(mdlMesh: MDLMesh, asset: Asset, position: float3, scale: Float)
     {
         guard let positionAttribute = mdlMesh.vertexDescriptor.attributeNamed(MDLVertexAttributePosition),
         positionAttribute.format == .float3,
@@ -187,6 +152,9 @@ class Render
         else { return }
 
         guard let submeshes = mdlMesh.submeshes as? [MDLSubmesh] else { return }
+        
+        materialData += asset.getMaterialData()
+
         for submesh in submeshes {
             var indices = submesh.indexBuffer.map().bytes.bindMemory(to: UInt16.self, capacity: submesh.indexCount)
             for _ in 0..<submesh.indexCount {
@@ -204,16 +172,12 @@ class Render
                 vertices.append(newPosition * scale + position)
                 normals.append(newNormal)
                 indices = indices.advanced(by: 1)
-                let color: float3
-                if let baseColor = submesh.material?.property(with: .baseColor),
-                   baseColor.type == .float3 {
-                    color = baseColor.float3Value
-                } else {
-                    color = [1, 1, 0]
-                }
-                colors.append(color)
+                
+                materialIndeces.append(materialIndex)
             }
         }
+        
+        materialIndex += 1
     }
 
     /// Adds the given mesh to the scene
@@ -257,7 +221,7 @@ class Render
 
                         //scolor = baseColor.float3Value
                         color = float3(baseColor.float4Value.x, baseColor.float4Value.y, baseColor.float4Value.z)
-                        colors.append(color)
+                        //colors.append(color)
 
                             
                         //} else {
@@ -268,7 +232,7 @@ class Render
                         //}
                     } else {
                         color = [1, 0, 0]
-                        colors.append(color)
+                        //colors.append(color)
                     }
                     
                     //if let roughness = material.property(with: .roughness) {

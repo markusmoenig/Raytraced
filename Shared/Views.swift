@@ -7,29 +7,96 @@
 
 import SwiftUI
 
-struct Float2ParamView: View {
+struct LabelledDivider: View {
+
+    let label: String
+    let horizontalPadding: CGFloat
+    let color: Color
+
+    init(label: String, horizontalPadding: CGFloat = 5, color: Color = .gray) {
+        self.label = label
+        self.horizontalPadding = horizontalPadding
+        self.color = color
+    }
+
+    var body: some View {
+        HStack {
+            line
+            Text(label).foregroundColor(color)
+            line
+        }
+    }
+
+    var line: some View {
+        VStack { Divider().background(color) }.padding(horizontalPadding)
+    }
+}
+
+struct FloatParamView: View {
     
     let core                                : Core
-    
-    var asset                               : Asset
-    
+        
     var valueName                           : String
     var displayName                         : String
-    var updateView                          : Binding<Bool>
     
     @State var xValueText                   : String = ""
     @State var yValueText                   : String = ""
     
-    init(core: Core, asset: Asset, valueName: String, displayName: String, updateView: Binding<Bool>)
+    init(core: Core, valueName: String, displayName: String)
     {
         self.core = core
-        self.asset = asset
         self.valueName = valueName
         self.displayName = displayName
-        self.updateView = updateView
         
-        _xValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_x"]!))
-        _yValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_y"]!))
+        if let asset = core.assetFolder.current {
+            _xValueText = State(initialValue: String(format: "%.03g", asset.values[valueName]!))
+        }
+    }
+    
+    var body: some View {
+
+        HStack(alignment: .top) {
+            Text(displayName)
+                .frame(minWidth: 80, idealWidth: 80, maxWidth: 80, alignment: .leading)
+                if let asset = core.assetFolder.current {
+                    TextField(valueName, text: $xValueText, onEditingChanged: { (changed) in
+                    },
+                    onCommit: {
+                        asset.values[valueName] = Float(xValueText)
+                        core.renderer.restart()
+                    } )
+                }
+        }
+        .padding(2)
+
+        .onReceive(core.modelChanged) { id in
+            if let asset = core.assetFolder.current {
+                xValueText = String(format: "%.03g", asset.values[valueName]!)
+            }
+        }
+    }
+}
+
+struct Float2ParamView: View {
+    
+    let core                                : Core
+        
+    var valueName                           : String
+    var displayName                         : String
+    
+    @State var xValueText                   : String = ""
+    @State var yValueText                   : String = ""
+    
+    init(core: Core, valueName: String, displayName: String)
+    {
+        self.core = core
+        self.valueName = valueName
+        self.displayName = displayName
+        
+        if let asset = core.assetFolder.current {
+            _xValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_x"]!))
+            _yValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_y"]!))
+        }
     }
     
     var body: some View {
@@ -37,29 +104,31 @@ struct Float2ParamView: View {
         VStack(alignment: .leading) {
             Text(displayName)
             HStack {
-                TextField(valueName, text: $xValueText, onEditingChanged: { (changed) in
-                },
-                onCommit: {
-                    asset.values[valueName + "_x"] = Float(xValueText)
-                    core.renderer.restart()
-                    updateView.wrappedValue.toggle()
-                } )
-                .border(Color.red)
-                TextField(valueName, text: $yValueText, onEditingChanged: { (changed) in
-                    asset.values[valueName + "_y"] = Float(yValueText)
-                    core.renderer.restart()
-                    updateView.wrappedValue.toggle()
-                },
-                onCommit: {
-                } )
-                .border(Color.green)
+                if let asset = core.assetFolder.current {
+                    TextField(valueName, text: $xValueText, onEditingChanged: { (changed) in
+                    },
+                    onCommit: {
+                        asset.values[valueName + "_x"] = Float(xValueText)
+                        core.renderer.restart()
+                    } )
+                    .border(Color.red)
+                    TextField(valueName, text: $yValueText, onEditingChanged: { (changed) in
+                        asset.values[valueName + "_y"] = Float(yValueText)
+                        core.renderer.restart()
+                    },
+                    onCommit: {
+                    } )
+                    .border(Color.green)
+                }
             }
             .padding(2)
         }
         
         .onReceive(core.modelChanged) { id in
-            xValueText = String(format: "%.03g", asset.values[valueName + "_x"]!)
-            yValueText = String(format: "%.03g", asset.values[valueName + "_y"]!)
+            if let asset = core.assetFolder.current {
+                xValueText = String(format: "%.03g", asset.values[valueName + "_x"]!)
+                yValueText = String(format: "%.03g", asset.values[valueName + "_y"]!)
+            }
         }
     }
 }
@@ -67,28 +136,25 @@ struct Float2ParamView: View {
 struct Float3ParamView: View {
     
     let core                                : Core
-    
-    var asset                               : Asset
-    
+        
     var valueName                           : String
     var displayName                         : String
-    var updateView                          : Binding<Bool>
     
     @State var xValueText                   : String = ""
     @State var yValueText                   : String = ""
     @State var zValueText                   : String = ""
     
-    init(core: Core, asset: Asset, valueName: String, displayName: String, updateView: Binding<Bool>)
+    init(core: Core, valueName: String, displayName: String)
     {
         self.core = core
-        self.asset = asset
         self.valueName = valueName
         self.displayName = displayName
-        self.updateView = updateView
         
-        _xValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_x"]!))
-        _yValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_y"]!))
-        _zValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_z"]!))
+        if let asset = core.assetFolder.current {
+            _xValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_x"]!))
+            _yValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_y"]!))
+            _zValueText = State(initialValue: String(format: "%.03g", asset.values[valueName + "_z"]!))
+        }
     }
     
     var body: some View {
@@ -96,38 +162,81 @@ struct Float3ParamView: View {
         VStack(alignment: .leading) {
             Text(displayName)
             HStack {
-                TextField(valueName, text: $xValueText, onEditingChanged: { (changed) in
-                },
-                onCommit: {
-                    asset.values[valueName + "_x"] = Float(xValueText)
-                    core.renderer.restart()
-                    updateView.wrappedValue.toggle()
-                } )
-                .border(Color.red)
-                TextField(valueName, text: $yValueText, onEditingChanged: { (changed) in
-                    asset.values[valueName + "_y"] = Float(yValueText)
-                    core.renderer.restart()
-                    updateView.wrappedValue.toggle()
-                },
-                onCommit: {
-                } )
-                .border(Color.green)
-                TextField(valueName, text: $zValueText, onEditingChanged: { (changed) in
-                    asset.values[valueName + "_z"] = Float(zValueText)
-                    core.renderer.restart()
-                    updateView.wrappedValue.toggle()
-                },
-                onCommit: {
-                } )
-                .border(Color.blue)
+                if let asset = core.assetFolder.current {
+
+                    TextField(valueName, text: $xValueText, onEditingChanged: { (changed) in
+                    },
+                    onCommit: {
+                        asset.values[valueName + "_x"] = Float(xValueText)
+                        core.renderer.restart()
+                    } )
+                    .border(Color.red)
+                    TextField(valueName, text: $yValueText, onEditingChanged: { (changed) in
+                        asset.values[valueName + "_y"] = Float(yValueText)
+                        core.renderer.restart()
+                    },
+                    onCommit: {
+                    } )
+                    .border(Color.green)
+                    TextField(valueName, text: $zValueText, onEditingChanged: { (changed) in
+                        asset.values[valueName + "_z"] = Float(zValueText)
+                        core.renderer.restart()
+                    },
+                    onCommit: {
+                    } )
+                    .border(Color.blue)
+                }
             }
             .padding(2)
         }
         
         .onReceive(core.modelChanged) { id in
-            xValueText = String(format: "%.03g", asset.values[valueName + "_x"]!)
-            yValueText = String(format: "%.03g", asset.values[valueName + "_y"]!)
-            zValueText = String(format: "%.03g", asset.values[valueName + "_z"]!)
+            if let asset = core.assetFolder.current {
+                xValueText = String(format: "%.03g", asset.values[valueName + "_x"]!)
+                yValueText = String(format: "%.03g", asset.values[valueName + "_y"]!)
+                if let zValue = asset.values[valueName + "_z"] {
+                    zValueText = String(format: "%.03g", zValue)
+                }
+            }
+        }
+    }
+}
+
+struct MaterialView: View {
+    
+    let core                                : Core
+    
+    var asset                               : Asset
+
+    init(core: Core, asset: Asset)
+    {
+        self.core = core
+        self.asset = asset
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            
+            Float3ParamView(core: core, valueName: "albedo", displayName: "Albedo")
+            FloatParamView(core: core, valueName: "metallic", displayName: "Metallic")
+            FloatParamView(core: core, valueName: "roughness", displayName: "Roughness")
+            
+            FloatParamView(core: core, valueName: "specular", displayName: "Specular")
+            //FloatParamView(core: core, valueName: "specularTint", displayName: "Specular Tint")
+            FloatParamView(core: core, valueName: "subsurface", displayName: "Subsurface")
+            FloatParamView(core: core, valueName: "anisotropic", displayName: "Anisotropic")
+            
+            //FloatParamView(core: core, valueName: "sheen", displayName: "Sheen")
+            //FloatParamView(core: core, valueName: "sheenTint", displayName: "SheenTint")
+            
+            FloatParamView(core: core, valueName: "clearcoat", displayName: "Clearcoat")
+            FloatParamView(core: core, valueName: "clearcoatGloss", displayName: "Clearcoat Gloss")
+            
+            FloatParamView(core: core, valueName: "transmission", displayName: "Transmission")
+            FloatParamView(core: core, valueName: "ior", displayName: "Index of Refr.")
+            
+            //Float3ParamView(core: core, valueName: "emission", displayName: "Emission")
+            //Float3ParamView(core: core, valueName: "extinction", displayName: "Extinction")*/
         }
     }
 }
@@ -164,11 +273,11 @@ struct ParameterView: View {
                     } )
                     .padding(2)
                     
-                    Float3ParamView(core: core, asset: currentAsset, valueName: "position", displayName: "Position", updateView: $updateView)
-                    
-                    Divider()
+                    Float3ParamView(core: core, valueName: "position", displayName: "Position")
                     
                     if currentAsset.type == .Primitive {
+                        LabelledDivider(label: "Shape")
+
                         Menu {
                             Button("Plane", action: {
                                 currentAsset.values["type"] = 0
@@ -211,14 +320,17 @@ struct ParameterView: View {
                         
                         if let type = currentAsset.values["type"] {
                             if type == 0 {
-                                Float2ParamView(core: core, asset: currentAsset, valueName: "size", displayName: "Size", updateView: $updateView)
-                                Float2ParamView(core: core, asset: currentAsset, valueName: "segments", displayName: "Segments", updateView: $updateView)
+                                Float2ParamView(core: core, valueName: "size", displayName: "Size")
+                                Float2ParamView(core: core, valueName: "segments", displayName: "Segments")
                             } else
                             if type == 1 || type == 2 {
-                                Float3ParamView(core: core, asset: currentAsset, valueName: "size", displayName: "Size", updateView: $updateView)
-                                Float3ParamView(core: core, asset: currentAsset, valueName: "segments", displayName: "Segments", updateView: $updateView)
+                                Float3ParamView(core: core, valueName: "size", displayName: "Size")
+                                Float3ParamView(core: core, valueName: "segments", displayName: "Segments")
                             }
                         }
+                        
+                        LabelledDivider(label: "Material")
+                        MaterialView(core: core, asset: currentAsset)
                     }
                 }
                                 

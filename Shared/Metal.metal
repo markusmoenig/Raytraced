@@ -852,14 +852,39 @@ inline T interpolateVertexAttribute(device T *attributes, Intersection intersect
   return uvw.x * T0 + uvw.y * T1 + uvw.z * T2;
 }
 
+void fillMaterialData(thread PTMaterial *material, device float4 *materialData)
+{
+    material->albedo = materialData[0].xyz;
+    material->specular = materialData[0].w;
+    
+    material->emission = materialData[1].xyz;
+    material->anisotropic = materialData[1].w;
+    
+    material->metallic = materialData[2].x;
+    material->roughness = materialData[2].y;
+    material->subsurface = materialData[2].z;
+    material->specularTint = materialData[2].w;
+
+    material->sheen = materialData[3].x;
+    material->sheenTint = materialData[3].y;
+    material->clearcoat = materialData[3].z;
+    material->clearcoatGloss = materialData[3].w;
+    
+    material->transmission = materialData[4].x;
+    
+    material->extinction = materialData[5].xyz;
+    material->ior = materialData[5].w;
+}
+
 kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                         constant Uniforms & uniforms,
                         device Ray *rays,
                         device Ray *shadowRays,
                         device Intersection *intersections,
-                        device float3 *vertexColors,
+                        device float4 *materialData,
                         device float3 *vertexNormals,
                         device float2 *random,
+                        device uint *materialIndeces,
                         texture2d<float, access::write> renderTarget)
 {
     if (tid.x < uniforms.width && tid.y < uniforms.height) {
@@ -880,8 +905,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
             PTRandom random = PTRandom(uv, uniforms.randomVector, uniforms.numberOfLights);
             
             float3 surfacePos = ray.origin + ray.direction * intersection.distance;
-            float3 surfaceNormal = interpolateVertexAttribute(vertexNormals,
-                                                        intersection);
+            float3 surfaceNormal = interpolateVertexAttribute(vertexNormals, intersection);
             surfaceNormal = normalize(surfaceNormal);
             
             ray.surfacePos = surfacePos;
@@ -891,6 +915,10 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
             PTLight light = PTLight();
             
             PTState state = PTState();
+
+            uint materialIndex = materialIndeces[intersection.primitiveIndex * 3] * 6;
+            fillMaterialData(&state.mat, &materialData[materialIndex]);
+
             state.fhp = surfacePos;
             state.normal = surfaceNormal;
             state.ffnormal = dot(surfaceNormal, ray.direction) <= 0.0 ? surfaceNormal : surfaceNormal * -1.0;
@@ -903,8 +931,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
 
             state.eta = dot(state.normal, state.ffnormal) > 0.0 ? (1.0 / state.mat.ior) : state.mat.ior;
 
-            state.mat.albedo = interpolateVertexAttribute(vertexColors, intersection);
-            ray.color = state.mat.albedo;
+            ray.color.x = float(materialIndex);
 
             // DirectLight for a random light source
 
@@ -991,6 +1018,7 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
                          device Ray *rays,
                          device Ray *shadowRays,
                          device float *intersections,
+                         device float4 *materialData,
                          texture2d<float, access::read_write> renderTarget)
 {
     if (tid.x < uniforms.width && tid.y < uniforms.height)
@@ -1009,6 +1037,10 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
             PTRandom random = PTRandom(uv, uniforms.randomVector, uniforms.numberOfLights);
             
             PTState state = PTState();
+            
+            unsigned int materialIndex = uint(ray.color.x);
+            fillMaterialData(&state.mat, &materialData[materialIndex]);
+
             state.fhp = ray.surfacePos;
             state.normal = ray.surfaceNormal;
             state.ffnormal = dot(ray.surfaceNormal, ray.direction) <= 0.0 ? ray.surfaceNormal : ray.surfaceNormal * -1.0;
