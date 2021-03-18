@@ -20,7 +20,10 @@ class Render
     var materialIndeces     : [uint] = []
     
     var materialData        : [float4] = []
+    var lightData           : [float4] = []
     
+    var lightCount          : UInt32 = 0
+
     lazy var vertexDescriptor: MDLVertexDescriptor = {
       let vertexDescriptor = MDLVertexDescriptor()
       vertexDescriptor.attributes[0] =
@@ -48,6 +51,8 @@ class Render
         materialIndeces = []
         materialData = []
         materialIndex = 0
+        lightData = []
+        lightCount = 0
         buildScene()
     }
     
@@ -77,6 +82,26 @@ class Render
                 
                 if let mesh = mdlMesh {
                     addPrimitiveMeshToScene(mdlMesh: mesh, asset: asset, position: asset.readFloat3("position"), scale: asset.readFloat("scale"))
+                }
+            } else
+            if asset.type == .Light {
+                
+                lightCount += 1
+                
+                let position = asset.readFloat3("position")
+                lightData.append(float4(position.x, position.y, position.z, 0))
+                let emission = asset.readFloat3("emission")
+                lightData.append(float4(emission.x, emission.y, emission.z, 0))
+                
+                if asset.values["type"] == 0 {
+                    // Sphere
+
+                    lightData.append(float4(0,0,0,0))
+                    lightData.append(float4(0,0,0,0))
+
+                    let radius = asset.readFloat("radius")
+                    lightData.append(float4(radius, 4.0 * Float.pi * radius * radius, 1, 0))
+                    print(radius, position, emission)
                 }
             }
         }

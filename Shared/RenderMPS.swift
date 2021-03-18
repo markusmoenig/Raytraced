@@ -24,6 +24,7 @@ class RenderMPS : Render
     var randomBuffer        : MTLBuffer!
 
     var materialBuffer      : MTLBuffer!
+    var lightBuffer         : MTLBuffer!
 
     var rayBuffer           : MTLBuffer!
     var shadowRayBuffer     : MTLBuffer!
@@ -138,6 +139,7 @@ class RenderMPS : Render
             computeEncoder?.setBuffer(randomBuffer, offset: randomBufferOffset,
                                       index: 6)
             computeEncoder?.setBuffer(materialIndexBuffer, offset: 0, index: 7)
+            computeEncoder?.setBuffer(lightBuffer, offset: 0, index: 8)
             computeEncoder?.setTexture(renderTarget, index: 0)
             computeEncoder?.setComputePipelineState(shadePipelineState!)
             computeEncoder?.dispatchThreadgroups(threadGroups, threadsPerThreadgroup: threadsPerGroup)
@@ -165,6 +167,7 @@ class RenderMPS : Render
             computeEncoder?.setBuffer(shadowRayBuffer, offset: 0, index: 2)
             computeEncoder?.setBuffer(intersectionBuffer, offset: 0, index: 3)
             computeEncoder?.setBuffer(materialBuffer, offset: 0, index: 4)
+            computeEncoder?.setBuffer(lightBuffer, offset: 0, index: 5)
             computeEncoder?.setTexture(renderTarget, index: 0)
             computeEncoder?.setComputePipelineState(shadowPipeline!)
             computeEncoder?.dispatchThreadgroups(threadGroups,threadsPerThreadgroup: threadsPerGroup)
@@ -217,10 +220,6 @@ class RenderMPS : Render
         renderTargetDescriptor.usage = [.shaderRead, .shaderWrite]
         
         renderTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
-
-        //radianceTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
-        //throughputTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
-        //absorptionTarget = core.device.makeTexture(descriptor: renderTargetDescriptor)
 
         var rayCount = Int(size.x * size.y)
         if rayCount == 0 { rayCount = 1 }
@@ -294,14 +293,15 @@ class RenderMPS : Render
             materialIndexBuffer.setPurgeableState(.empty)
             vertexNormalBuffer.setPurgeableState(.empty)
             materialBuffer.setPurgeableState(.empty)
+            lightBuffer.setPurgeableState(.empty)
         }
         uniformBuffer = device.makeBuffer(length: uniformBufferSize, options: options)
         randomBuffer = device.makeBuffer(length: 256 * MemoryLayout<float2>.stride * maxFramesInFlight, options: options)
         vertexPositionBuffer = device.makeBuffer(bytes: &vertices, length: vertices.count * MemoryLayout<float3>.stride, options: options)
         materialIndexBuffer = device.makeBuffer(bytes: &materialIndeces, length: materialIndeces.count * MemoryLayout<uint>.stride, options: options)
         vertexNormalBuffer = device.makeBuffer(bytes: &normals, length: normals.count * MemoryLayout<float3>.stride, options: options)
-        
-        materialBuffer = device.makeBuffer(bytes: &materialData, length: materialData.count * MemoryLayout<float4>.stride * 6, options: options)
+        materialBuffer = device.makeBuffer(bytes: &materialData, length: materialData.count * MemoryLayout<float4>.stride, options: options)
+        lightBuffer = device.makeBuffer(bytes: &lightData, length: lightData.count * MemoryLayout<float4>.stride, options: options)
     }
     
     func update() {
@@ -322,16 +322,7 @@ class RenderMPS : Render
         camera.aperture = 0
         camera.fov = 80
       
-        var light = AreaLight()
-        light.position = float3(0.0, 1.98, 0.0)
-        light.forward = float3(0.0, -1.0, 0.0)
-        light.right = float3(0.25, 0.0, 0.0)
-        light.up = float3(0.0, 0.0, 0.25)
-        light.color = float3(4.0, 4.0, 4.0)
-      
-        uniforms.pointee.camera = camera
-        uniforms.pointee.light = light
-        
+        uniforms.pointee.camera = camera        
         uniforms.pointee.randomVector = float3(Float.random(in: 0...1), Float.random(in: 0...1), Float.random(in: 0...1))
       
         uniforms.pointee.width = uint(size.x)
@@ -339,7 +330,8 @@ class RenderMPS : Render
         uniforms.pointee.blocksWide = ((uniforms.pointee.width) + 15) / 16
         uniforms.pointee.frameIndex = frameIndex
         frameIndex += 1
-        uniforms.pointee.numberOfLights = 1;
+        uniforms.pointee.numberOfLights = lightCount
+        
         #if os(OSX)
         uniformBuffer?.didModifyRange(uniformBufferOffset..<(uniformBufferOffset + alignedUniformsSize))
         #endif

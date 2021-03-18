@@ -22,8 +22,10 @@ struct LabelledDivider: View {
     var body: some View {
         HStack {
             line
+                .padding(.top, 2)
             Text(label).foregroundColor(color)
             line
+                .padding(.bottom, 2)
         }
     }
 
@@ -57,7 +59,7 @@ struct FloatParamView: View {
 
         HStack(alignment: .top) {
             Text(displayName)
-                .frame(minWidth: 80, idealWidth: 80, maxWidth: 80, alignment: .leading)
+                .frame(minWidth: 100, idealWidth: 100, maxWidth: 100, alignment: .leading)
                 if let asset = core.assetFolder.current {
                     TextField(valueName, text: $xValueText, onEditingChanged: { (changed) in
                     },
@@ -71,7 +73,9 @@ struct FloatParamView: View {
 
         .onReceive(core.modelChanged) { id in
             if let asset = core.assetFolder.current {
-                xValueText = String(format: "%.03g", asset.values[valueName]!)
+                if let xValue = asset.values[valueName] {
+                    xValueText = String(format: "%.03g", xValue)
+                }
             }
         }
     }
@@ -192,13 +196,70 @@ struct Float3ParamView: View {
         
         .onReceive(core.modelChanged) { id in
             if let asset = core.assetFolder.current {
-                xValueText = String(format: "%.03g", asset.values[valueName + "_x"]!)
-                yValueText = String(format: "%.03g", asset.values[valueName + "_y"]!)
+                if let xValue = asset.values[valueName + "_x"] {
+                    xValueText = String(format: "%.03g", xValue)
+                }
+                if let yValue = asset.values[valueName + "_y"] {
+                    yValueText = String(format: "%.03g", yValue)
+                }
                 if let zValue = asset.values[valueName + "_z"] {
                     zValueText = String(format: "%.03g", zValue)
                 }
             }
         }
+    }
+}
+
+struct MaterialGroup1View: View {
+    
+    let core                                : Core
+    
+    var asset                               : Asset
+
+    init(core: Core, asset: Asset)
+    {
+        self.core = core
+        self.asset = asset
+    }
+    
+    var body: some View {
+            
+        Float3ParamView(core: core, valueName: "albedo", displayName: "Albedo")
+        FloatParamView(core: core, valueName: "metallic", displayName: "Metallic")
+        FloatParamView(core: core, valueName: "roughness", displayName: "Roughness")
+        
+        FloatParamView(core: core, valueName: "specular", displayName: "Specular")
+        FloatParamView(core: core, valueName: "specularTint", displayName: "Specular Tint")
+        FloatParamView(core: core, valueName: "subsurface", displayName: "Subsurface")
+        FloatParamView(core: core, valueName: "anisotropic", displayName: "Anisotropic")
+    }
+}
+
+struct MaterialGroup2View: View {
+    
+    let core                                : Core
+    
+    var asset                               : Asset
+
+    init(core: Core, asset: Asset)
+    {
+        self.core = core
+        self.asset = asset
+    }
+    
+    var body: some View {
+        
+        FloatParamView(core: core, valueName: "sheen", displayName: "Sheen")
+        FloatParamView(core: core, valueName: "sheenTint", displayName: "SheenTint")
+        
+        FloatParamView(core: core, valueName: "clearcoat", displayName: "Clearcoat")
+        FloatParamView(core: core, valueName: "clearcoatGloss", displayName: "Clearcoat Gloss")
+        
+        FloatParamView(core: core, valueName: "transmission", displayName: "Transmission")
+        FloatParamView(core: core, valueName: "ior", displayName: "Index of Refr.")
+        
+        Float3ParamView(core: core, valueName: "emission", displayName: "Emission")
+        Float3ParamView(core: core, valueName: "extinction", displayName: "Extinction")
     }
 }
 
@@ -217,26 +278,8 @@ struct MaterialView: View {
     var body: some View {
         VStack(alignment: .leading) {
             
-            Float3ParamView(core: core, valueName: "albedo", displayName: "Albedo")
-            FloatParamView(core: core, valueName: "metallic", displayName: "Metallic")
-            FloatParamView(core: core, valueName: "roughness", displayName: "Roughness")
-            
-            FloatParamView(core: core, valueName: "specular", displayName: "Specular")
-            //FloatParamView(core: core, valueName: "specularTint", displayName: "Specular Tint")
-            FloatParamView(core: core, valueName: "subsurface", displayName: "Subsurface")
-            FloatParamView(core: core, valueName: "anisotropic", displayName: "Anisotropic")
-            
-            //FloatParamView(core: core, valueName: "sheen", displayName: "Sheen")
-            //FloatParamView(core: core, valueName: "sheenTint", displayName: "SheenTint")
-            
-            FloatParamView(core: core, valueName: "clearcoat", displayName: "Clearcoat")
-            FloatParamView(core: core, valueName: "clearcoatGloss", displayName: "Clearcoat Gloss")
-            
-            FloatParamView(core: core, valueName: "transmission", displayName: "Transmission")
-            FloatParamView(core: core, valueName: "ior", displayName: "Index of Refr.")
-            
-            //Float3ParamView(core: core, valueName: "emission", displayName: "Emission")
-            //Float3ParamView(core: core, valueName: "extinction", displayName: "Extinction")*/
+            MaterialGroup1View(core: core, asset: asset)
+            MaterialGroup2View(core: core, asset: asset)
         }
     }
 }
@@ -251,6 +294,7 @@ struct ParameterView: View {
     @State var updateView                   : Bool = false
     
     @State var primitiveMenuName            : String = ""
+    @State var lightMenuName                : String = ""
 
     init(_ core: Core)
     {
@@ -332,6 +376,35 @@ struct ParameterView: View {
                         LabelledDivider(label: "Material")
                         MaterialView(core: core, asset: currentAsset)
                     }
+                    else
+                    if currentAsset.type == .Light {
+                        
+                        LabelledDivider(label: "Light Settings")
+
+                        Menu {
+                            Button("Sphere", action: {
+                                currentAsset.values["type"] = 0
+                                core.renderer.restart()
+                                lightMenuName = "Type: Sphere"
+                                core.modelChanged.send()
+                            })
+                            Button("Rect", action: {
+                                currentAsset.values["type"] = 1
+                                core.renderer.restart()
+                                lightMenuName = "Type: Rect"
+                                core.modelChanged.send()
+                            })
+                        }
+                        label: {
+                            Text(lightMenuName)
+                        }
+                        
+                        if let type = currentAsset.values["type"] {
+                            if type == 0 {
+                                FloatParamView(core: core, valueName: "radius", displayName: "Radius")
+                            }
+                        }
+                    }
                 }
                                 
                 Spacer()
@@ -343,6 +416,7 @@ struct ParameterView: View {
                 if let asset = asset {
                     nameState = asset.name
                     primitiveMenuName = "Type: " + getPrimitiveTypeString(asset)
+                    lightMenuName = "Type: " + getLightTypeString(asset)
                 }
                 core.modelChanged.send()
             }
@@ -352,6 +426,7 @@ struct ParameterView: View {
                 if let asset = asset {
                     nameState = asset.name
                     primitiveMenuName = "Type: " + getPrimitiveTypeString(asset)
+                    lightMenuName = "Type: " + getLightTypeString(asset)
                 }
             })
         }
@@ -363,6 +438,14 @@ struct ParameterView: View {
         if type == 0 { return "Plane" }
         if type == 1 { return "Cube" }
         if type == 2 { return "Sphere" }
+        return ""
+    }
+    
+    func getLightTypeString(_ asset: Asset) -> String
+    {
+        let type = asset.values["type"]
+        if type == 0 { return "Sphere" }
+        if type == 1 { return "Rect" }
         return ""
     }
 }
@@ -377,6 +460,7 @@ struct LeftPanelView: View {
     
     @State private var selection            : UUID? = nil
         
+    @State private var showLights           : Bool = true
     @State private var showPrimitives       : Bool = true
     @State private var showObjects          : Bool = true
 
@@ -411,22 +495,44 @@ struct LeftPanelView: View {
                         Color.gray.mask(RoundedRectangle(cornerRadius: 4))
                     } else { Color.clear }
                 })
+                DisclosureGroup("Lights", isExpanded: $showLights) {
+                    ForEach(core.assetFolder.assets, id: \.id) { asset in
+                        if asset.type == .Light {
+                            Button(action: {
+                                core.assetFolder.setCurrent(asset)
+                            })
+                            {
+                                Label(asset.name, systemImage: "lightbulb")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .listRowBackground(Group {
+                                if selection == asset.id {
+                                    Color.gray.mask(RoundedRectangle(cornerRadius: 4))
+                                } else { Color.clear }
+                            })
+                        }
+                    }
+                }
                 DisclosureGroup("Primitives", isExpanded: $showPrimitives) {
                     ForEach(core.assetFolder.assets, id: \.id) { asset in
-                        Button(action: {
-                            core.assetFolder.setCurrent(asset)
-                        })
-                        {
-                            Label(asset.name, systemImage: "cube")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
+                        if asset.type == .Primitive {
+                            Button(action: {
+                                core.assetFolder.setCurrent(asset)
+                            })
+                            {
+                                Label(asset.name, systemImage: "cube")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .listRowBackground(Group {
+                                if selection == asset.id {
+                                    Color.gray.mask(RoundedRectangle(cornerRadius: 4))
+                                } else { Color.clear }
+                            })
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .listRowBackground(Group {
-                            if selection == asset.id {
-                                Color.gray.mask(RoundedRectangle(cornerRadius: 4))
-                            } else { Color.clear }
-                        })
                     }
                 }
             }

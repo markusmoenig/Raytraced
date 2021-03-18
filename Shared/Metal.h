@@ -18,14 +18,6 @@ struct Camera {
     float           aperture;
 };
 
-struct AreaLight {
-  vector_float3 position;
-  vector_float3 forward;
-  vector_float3 right;
-  vector_float3 up;
-  vector_float3 color;
-};
-
 struct Uniforms
 {
     unsigned int    width;
@@ -38,7 +30,6 @@ struct Uniforms
     unsigned int    numberOfLights;
     
     struct Camera   camera;
-    struct AreaLight light;
 };
 
 #endif /* Metal_h */

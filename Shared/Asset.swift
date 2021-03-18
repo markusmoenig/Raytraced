@@ -43,6 +43,7 @@ class AssetFolder       : Codable
         
         let box = addBox()
         addPlane()
+        addLight()
         setCurrent(box)
     }
     
@@ -50,17 +51,17 @@ class AssetFolder       : Codable
     @discardableResult func addBox(name: String = "Cube") -> Asset
     {
         let values : [String: Float] = [
-            "type" : 1,
+            "type"       : 1,
             "position_x" : 0,
             "position_y" : 0.5,
             "position_z" : 0,
-            "scale" : 1,
+            "scale"      : 1,
             "segments_x" : 1,
             "segments_y" : 1,
             "segments_z" : 1,
-            "size_x" : 1,
-            "size_y" : 1,
-            "size_z" : 1,
+            "size_x"     : 1,
+            "size_y"     : 1,
+            "size_z"     : 1,
         ]
         
         let asset = Asset(type: .Primitive, name: name, values: values)
@@ -73,21 +74,46 @@ class AssetFolder       : Codable
     @discardableResult func addPlane() -> Asset
     {
         let values : [String: Float] = [
-            "type" : 0,
+            "type"       : 0,
             "position_x" : 0,
             "position_y" : 0,
             "position_z" : 0,
-            "scale" : 1,
+            "scale"      : 1,
             "segments_x" : 1,
             "segments_y" : 1,
             "segments_z" : 1,
-            "size_x" : 100,
-            "size_y" : 100,
+            "size_x"     : 100,
+            "size_y"     : 100,
         ]
         
         let asset = Asset(type: .Primitive, name: "Plane", values: values)
         assets.append(asset)
         writeDefaultMaterialData(asset: asset, albedo: float3(1, 1, 0))
+        return asset
+    }
+    
+    /// Adds a light to the scene
+    @discardableResult func addLight(name: String = "Light") -> Asset
+    {
+        let values : [String: Float] = [
+            "type" : 0,
+            "position_x" : 0,
+            "position_y" : 0,
+            "position_z" : 0,
+            "radius"     : 1,
+            "segments_x" : 1,
+            "segments_y" : 1,
+            "segments_z" : 1,
+            "size_x"     : 1,
+            "size_y"     : 1,
+            "size_z"     : 1,
+            "emission_x" : 4,
+            "emission_y" : 4,
+            "emission_z" : 4
+        ]
+        
+        let asset = Asset(type: .Light, name: name, values: values)
+        assets.append(asset)
         return asset
     }
     
@@ -147,7 +173,7 @@ class AssetFolder       : Codable
 class Asset         : Codable, Equatable
 {
     enum AssetType  : Int, Codable {
-        case Primitive, Object
+        case Primitive, Object, Light
     }
     
     var type        : AssetType = .Primitive

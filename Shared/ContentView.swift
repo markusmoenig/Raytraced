@@ -60,6 +60,16 @@ struct ContentView: View {
                 Label("Add", systemImage: "cube")
             }
             
+            Button(action: {
+                let light = document.core.assetFolder.addLight(name: "New Light")
+                document.core.assetFolder.setCurrent(light)
+                document.core.renderer.restart()
+                document.core.modelChanged.send()
+            })
+            {
+                Label("Add", systemImage: "lightbulb")
+            }
+            
             Divider()
                 .padding(.horizontal, 2)
                 .opacity(0)
