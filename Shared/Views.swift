@@ -210,6 +210,79 @@ struct Float3ParamView: View {
     }
 }
 
+struct Float3GlobalView: View {
+    
+    let core                                : Core
+        
+    var valueName                           : String
+    var displayName                         : String
+    
+    @State var xValueText                   : String = ""
+    @State var yValueText                   : String = ""
+    @State var zValueText                   : String = ""
+    
+    init(core: Core, valueName: String, displayName: String)
+    {
+        self.core = core
+        self.valueName = valueName
+        self.displayName = displayName
+        
+        let values = core.assetFolder.values
+        
+        if values[valueName + "_x"] != nil {
+            _xValueText = State(initialValue: String(format: "%.03g", values[valueName + "_x"]!))
+            _yValueText = State(initialValue: String(format: "%.03g", values[valueName + "_y"]!))
+            _zValueText = State(initialValue: String(format: "%.03g", values[valueName + "_z"]!))
+        }
+    }
+    
+    var body: some View {
+
+        VStack(alignment: .leading) {
+            Text(displayName)
+            HStack {
+                TextField(valueName, text: $xValueText, onEditingChanged: { (changed) in
+                },
+                onCommit: {
+                    core.assetFolder.values[valueName + "_x"] = Float(xValueText)
+                    core.renderer.restart()
+                } )
+                .border(Color.red)
+                TextField(valueName, text: $yValueText, onEditingChanged: { (changed) in
+                    core.assetFolder.values[valueName + "_y"] = Float(yValueText)
+                    core.renderer.restart()
+                },
+                onCommit: {
+                } )
+                .border(Color.green)
+                TextField(valueName, text: $zValueText, onEditingChanged: { (changed) in
+                    core.assetFolder.values[valueName + "_z"] = Float(zValueText)
+                    core.renderer.restart()
+                },
+                onCommit: {
+                } )
+                .border(Color.blue)
+            }
+            .padding(2)
+        }
+        
+        .onReceive(core.modelChanged) { id in
+            let values = core.assetFolder.values
+            if values[valueName + "_x"] != nil {
+                if let xValue = values[valueName + "_x"] {
+                    xValueText = String(format: "%.03g", xValue)
+                }
+                if let yValue = values[valueName + "_y"] {
+                    yValueText = String(format: "%.03g", yValue)
+                }
+                if let zValue = values[valueName + "_z"] {
+                    zValueText = String(format: "%.03g", zValue)
+                }
+            }
+        }
+    }
+}
+
 struct MaterialGroup1View: View {
     
     let core                                : Core
@@ -379,6 +452,8 @@ struct ParameterView: View {
                     else
                     if currentAsset.type == .Light {
                         
+                        Float3ParamView(core: core, valueName: "emission", displayName: "Emission")
+
                         LabelledDivider(label: "Light Settings")
 
                         Menu {
@@ -402,9 +477,18 @@ struct ParameterView: View {
                         if let type = currentAsset.values["type"] {
                             if type == 0 {
                                 FloatParamView(core: core, valueName: "radius", displayName: "Radius")
+                            } else {
+                                Float3ParamView(core: core, valueName: "v1", displayName: "v1")
+                                Float3ParamView(core: core, valueName: "v2", displayName: "v2")
                             }
                         }
                     }
+                }
+                else {
+                    // Camera
+                    
+                    Float3GlobalView(core: core, valueName: "origin", displayName: "Origin")
+                    Float3GlobalView(core: core, valueName: "lookAt", displayName: "Look At")
                 }
                                 
                 Spacer()

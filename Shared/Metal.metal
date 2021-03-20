@@ -825,7 +825,9 @@ kernel void primaryRays(constant Uniforms & uniforms [[buffer(0)]],
         
         ray.minDistance = 0;
         ray.maxDistance = INFINITY;
-        ray.color = float3(1.0);
+        
+        ray.color = float3(0.0);
+        
         ray.radiance = float3(0);
         ray.throughput = float3(1);
         ray.absorption = float3(0);
@@ -996,7 +998,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
 
             shadowRay.origin = surfacePos + FaceForward(state.normal, lightDir) * EPS;
             shadowRay.direction = lightDir;
-            shadowRay.maxDistance = lightDist - 1e-3;
+            shadowRay.maxDistance = lightDist;// - 1e-3;
             
             /*
             float2 r = random[(tid.y % 16) * 16 + (tid.x % 16)];
@@ -1049,6 +1051,29 @@ float SphereIntersect(float rad, float3 pos, PTRay r)
     return INFINITY;
 }
 
+//-----------------------------------------------------------------------
+float RectIntersect(float3 pos, float3 u, float3 v, float4 plane, PTRay r)
+//-----------------------------------------------------------------------
+{
+    float3 n = float3(plane);
+    float dt = dot(r.direction, n);
+    float t = (plane.w - dot(n, r.origin)) / dt;
+    if (t > EPS)
+    {
+        float3 p = r.origin + r.direction * t;
+        float3 vi = p - pos;
+        float a1 = dot(u, vi);
+        if (a1 >= 0. && a1 <= 1.)
+        {
+            float a2 = dot(v, vi);
+            if (a2 >= 0. && a2 <= 1.)
+                return t;
+        }
+    }
+
+    return INFINITY;
+}
+
 float TestLights(PTRay r, thread PTState &state, thread PTLightSampleRec &lightSampleRec, uint numberOfLights, device float4 *lightData, float dist)
 {
     float t = dist;
@@ -1064,6 +1089,29 @@ float TestLights(PTRay r, thread PTState &state, thread PTLightSampleRec &lightS
         float radius   = params.x;
         float area     = params.y;
         float type     = params.z; // 0->rect, 1->sphere*/
+        
+        if (type == 0.)
+        {
+            float3 normal = normalize(cross(u, v));
+            //if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
+            //    continue;
+            float4 plane = float4(normal, dot(normal, position));
+            u *= 1.0f / dot(u, u);
+            v *= 1.0f / dot(v, v);
+
+            d = RectIntersect(position, u, v, plane, r);
+            if (d < 0.)
+                d = INFINITY;
+            if (d < t)
+            {
+                t = d;
+                float cosTheta = dot(-r.direction, normal);
+                float pdf = (t * t) / (area * cosTheta);
+                lightSampleRec.emission = emission;
+                lightSampleRec.pdf = pdf;
+                state.isEmitter = true;
+            }
+        }
         
         // Spherical Area Light
         if (type == 1.)
@@ -1101,7 +1149,7 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
         device Ray & shadowRay = shadowRays[rayIdx];
         float intersectionDistance = intersections[rayIdx];
                     
-        if (shadowRay.maxDistance >= 0.0 && intersectionDistance < 0.0) {
+        if (shadowRay.maxDistance >= 0.0 &&  ray.color.y > 0.0) {
 
             PTLightSampleRec lightSampleRec;
             PTBsdfSampleRec bsdfSampleRec;
@@ -1180,7 +1228,7 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
             ray.absorption = absorption;
         } else {
             
-            if(intersectionDistance < 0.0)
+            //if
             {
                 PTLightSampleRec lightSampleRec;
                 PTBsdfSampleRec bsdfSampleRec;
@@ -1200,8 +1248,9 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
                 state.normal = ray.surfaceNormal;
                 state.ffnormal = dot(ray.surfaceNormal, ray.direction) <= 0.0 ? ray.surfaceNormal : ray.surfaceNormal * -1.0;
                 Onb(state.ffnormal, state.tangent, state.bitangent);
-                
-                float3 radiance = float3(0,0,1);
+                                
+                float3 radiance = ray.radiance;
+                float3 throughput = ray.throughput;
                 
                 // Test if a light is closer
                 
@@ -1209,16 +1258,20 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
                 ptRay.origin = ray.origin;
                 ptRay.direction = ray.direction;
                 
-                TestLights(ptRay, state, lightSampleRec, uniforms.numberOfLights, lightData, INFINITY);
-                
-                if (state.isEmitter) {
-                    radiance += EmitterSample(ptRay, state, lightSampleRec, bsdfSampleRec);
+                if (TestLights(ptRay, state, lightSampleRec, uniforms.numberOfLights, lightData, INFINITY) < INFINITY) {
+                    
+                    if (state.isEmitter) {
+                        radiance += EmitterSample(ptRay, state, lightSampleRec, bsdfSampleRec) * throughput;
+                        
+                        renderTarget.write(float4(radiance, 1.0), tid);
+                        
+                        ray.radiance = radiance;
+                        ray.throughput = float3(0);
+                        
+                        ray.maxDistance = -1.0;
+                        shadowRay.maxDistance = -1.0;
+                    }
                 }
-                
-                renderTarget.write(float4(radiance, 1.0), tid);
-                
-                ray.maxDistance = -1.0;
-                shadowRay.maxDistance = -1.0;
             }
         }
     }

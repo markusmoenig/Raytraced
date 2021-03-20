@@ -316,11 +316,11 @@ class RenderMPS : Render
         let uniforms = pointer.bindMemory(to: Uniforms.self, capacity: 1)
       
         var camera = Camera()
-        camera.position = float3(2, 1.0, -2)
-        camera.lookAt = float3(0, 0, 0)
+        camera.position = core.assetFolder.readFloat3("origin")
+        camera.lookAt = core.assetFolder.readFloat3("lookAt")
         camera.focalDist = 0.1
         camera.aperture = 0
-        camera.fov = 80
+        camera.fov = 60
       
         uniforms.pointee.camera = camera        
         uniforms.pointee.randomVector = float3(Float.random(in: 0...1), Float.random(in: 0...1), Float.random(in: 0...1))

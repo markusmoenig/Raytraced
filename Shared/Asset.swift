@@ -13,6 +13,8 @@ class AssetFolder       : Codable
     
     var core            : Core!
     
+    var values          : [String: Float] = [:]
+
     var current         : Asset? = nil
     var currentId       : UUID? = nil
 
@@ -21,6 +23,7 @@ class AssetFolder       : Codable
     private enum CodingKeys: String, CodingKey {
         case assets
         case currentId
+        case values
     }
     
     init()
@@ -40,6 +43,15 @@ class AssetFolder       : Codable
             current = assets[0]
             currentId = assets[0].id
         }*/
+        
+        values = [
+            "origin_x"  : -15,
+            "origin_y"  : 15,
+            "origin_z"  : 0,
+            "lookAt_x"  : 0,
+            "lookAt_y"  : 0,
+            "lookAt_z"  : 0,
+        ]
         
         let box = addBox()
         addPlane()
@@ -107,6 +119,12 @@ class AssetFolder       : Codable
             "size_x"     : 1,
             "size_y"     : 1,
             "size_z"     : 1,
+            "v1_x"       : 1,
+            "v1_y"       : 1,
+            "v1_z"       : 1,
+            "v2_x"       : 1,
+            "v2_y"       : 1,
+            "v2_z"       : 1,
             "emission_x" : 4,
             "emission_y" : 4,
             "emission_z" : 4
@@ -150,16 +168,23 @@ class AssetFolder       : Codable
             currentId = nil
         }
         
-        core.selectionChanged.send(currentId)
+        if let core = core {
+            core.selectionChanged.send(currentId)
+        }
     }
     
     required init(from decoder: Decoder) throws
     {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         assets = try container.decode([Asset].self, forKey: .assets)
-        //if let id = try container.decodeIfPresent(UUID?.self, forKey: .currentId) {
-            //select(id!)
-        //}
+        if let id = try container.decodeIfPresent(UUID?.self, forKey: .currentId) {
+            for a in assets {
+                if a.id == id {
+                    setCurrent(a)
+                }
+            }
+        }
+        values = try container.decode([String: Float].self, forKey: .values)
     }
     
     func encode(to encoder: Encoder) throws
@@ -167,6 +192,43 @@ class AssetFolder       : Codable
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(assets, forKey: .assets)
         try container.encode(currentId, forKey: .currentId)
+        try container.encode(values, forKey: .values)
+    }
+    
+    func readFloat(_ name: String) -> Float
+    {
+        var rc = Float(0)
+        if let x = values[name] { rc = x }
+        return rc
+    }
+    
+    func writeFloat(_ name: String, value: Float)
+    {
+        values[name] = value
+    }
+    
+    func readFloat2(_ name: String) -> float2
+    {
+        var rc = float2(0,0)
+        if let x = values[name + "_x"] { rc.x = x }
+        if let y = values[name + "_y"] { rc.y = y }
+        return rc
+    }
+    
+    func readFloat3(_ name: String) -> float3
+    {
+        var rc = float3(0,0,0)
+        if let x = values[name + "_x"] { rc.x = x }
+        if let y = values[name + "_y"] { rc.y = y }
+        if let z = values[name + "_z"] { rc.z = z }
+        return rc
+    }
+    
+    func writeFloat3(_ name: String, value: float3)
+    {
+        values[name + "_x"] = value.x
+        values[name + "_y"] = value.y
+        values[name + "_z"] = value.z
     }
 }
 

@@ -101,7 +101,21 @@ class Render
 
                     let radius = asset.readFloat("radius")
                     lightData.append(float4(radius, 4.0 * Float.pi * radius * radius, 1, 0))
-                    print(radius, position, emission)
+                } else
+                if asset.values["type"] == 1 {
+                    // Rect
+
+                    let v1 = asset.readFloat3("v1")
+                    let v2 = asset.readFloat3("v2")
+
+                    let u = v1 - position
+                    let v = v2 - position
+                    let area = length(cross(u, v))
+                    
+                    lightData.append(float4(u.x,u.y,u.z,0))
+                    lightData.append(float4(v.x,v.y,v.z,0))
+
+                    lightData.append(float4(0, area, 0, 0))
                 }
             }
         }
